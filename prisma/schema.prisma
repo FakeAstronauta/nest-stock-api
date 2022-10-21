@@ -1,0 +1,91 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// one to many, several products may containt the same category 
+model Warehouse {
+  id               Int              @id @default(autoincrement())
+  name             String           @unique @db.VarChar(250)
+  product          Product[]
+  purchases        Purchases[]
+  sells            Sells[]
+  warehouseSeller  WarehouseUsers[] @relation("SellerField")
+  warehouseAdmin   WarehouseUsers?  @relation("AdminField", fields: [warehouseAdminId], references: [id])
+  warehouseAdminId Int?
+}
+
+model Role {
+  id             Int              @id @default(autoincrement())
+  name           String           @unique @db.VarChar(250)
+  WarehouseUsers WarehouseUsers[]
+}
+
+model WarehouseUsers {
+  id              Int         @id @default(autoincrement())
+  name            String      @db.VarChar(250)
+  lastName        String      @db.VarChar(250)
+  roleId          Int
+  role            Role        @relation(fields: [roleId], references: [id])
+  bornAt          DateTime    @db.Date
+  dui             String      @unique @db.Char(9)
+  state           Boolean
+  registerAt      DateTime    @db.Date @default(now())
+  updatedAt       DateTime    @db.Date @updatedAt
+  warehouseSeller Warehouse?  @relation("SellerField", fields: [warehouseId], references: [id])
+  warehouseId     Int?
+  warehouseAdmin  Warehouse[] @relation("AdminField")
+}
+
+// INSERT INTO warehouseusers ("name", "lastName", "roleId", "bornAt", "dui", "state", "registerAt", "updatedAt", "warehouseId") VALUES ('Juan', 'Perez', 1, '1970-01-01T00:00:00.000Z', '111111111', true, '2020-01-01', '2020-01-01',1);
+
+// one to many, several products may containt the same category 
+model Category {
+  id      Int       @id @default(autoincrement())
+  name    String    @unique @db.VarChar(250)
+  product Product[]
+}
+
+model Product {
+  id          Int         @id @default(autoincrement())
+  name        String      @unique @db.VarChar(250)
+  producedAt  DateTime?   @db.Date
+  expiresAt   DateTime?   @db.Date
+  categoryId  Int
+  category    Category    @relation(fields: [categoryId], references: [id])
+  unitPrice   Decimal
+  state       Boolean
+  warehouseId Int
+  warehouse   Warehouse   @relation(fields: [warehouseId], references: [id])
+  purchases   Purchases[]
+  sells       Sells[]
+}
+
+model Purchases {
+  id          Int       @id @default(autoincrement())
+  productId   Int
+  product     Product   @relation(fields: [productId], references: [id])
+  amount      Int
+  finalPrice  Decimal
+  warehouseId Int
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
+  registedAt  DateTime  @db.Date @default(now())
+}
+
+model Sells {
+  id          Int       @id @default(autoincrement())
+  productId   Int
+  product     Product   @relation(fields: [productId], references: [id])
+  amount      Int
+  finalPrice  Decimal
+  warehouseId Int
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
+  registedAt  DateTime  @db.Date @default(now())
+}
