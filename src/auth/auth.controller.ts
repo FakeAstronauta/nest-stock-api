@@ -1,44 +1,39 @@
 import {
-    Body,
-    Controller,
-    HttpCode,
-    HttpStatus,
-    Post,
-    UseGuards
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UseGuards,
 } from '@nestjs/common';
 
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { Roles } from './decorator';
 import { AuthDto } from './dto';
+import { SignInDto } from './dto/signIn.dto';
 import { Role } from './enum/roles.enum';
 import { JwtGuard, RolesGuard } from './guard';
 
-@ApiTags('Auth')
+@ApiTags('Auth') // this must be called 'Admin'
 @Controller('auth')
 @UseGuards(RolesGuard)
 export class AuthController {
-    constructor(
-        private authService: AuthService,
-    ) { }
+  constructor(private authService: AuthService) {}
 
-    @Roles(Role.Admin)
-    @UseGuards(JwtGuard)
-    @Post('registerSeller')
-    @HttpCode(HttpStatus.OK)
-    addOne(@Body() dto: AuthDto) {
-        return this.authService.addOne(dto)
-    }
+  // only a admin can register new user
+  @Roles(Role.Admin)
+  @UseGuards(JwtGuard)
+  @Post('newUser')
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  addOne(@Body() dto: AuthDto) {
+    return this.authService.signUp(dto);
+  }
 
-    @Post('signInAdmin')
-    @HttpCode(HttpStatus.OK)
-    signInAdmin(@Body() userName: {name: string}) {
-        return this.authService.signInAdmin(userName)
-    }
-
-    @Post('signInSeller')
-    @HttpCode(HttpStatus.OK)
-    signInSeller(@Body() userName: {name: string}) {
-        return this.authService.signInSeller(userName)
-    }
+  @Post('signIn')
+  @HttpCode(HttpStatus.OK)
+  signIn(@Body() userName: SignInDto) {
+    return this.authService.signIn(userName);
+  }
 }

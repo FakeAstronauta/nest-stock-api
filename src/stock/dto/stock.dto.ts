@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsBoolean,
   IsDate,
   IsDecimal,
   IsInt,
@@ -9,36 +8,39 @@ import {
   Min,
 } from 'class-validator';
 
-export class ProductDto {
-  @IsString()
-  @IsNotEmpty()
-  @ApiProperty()
-  name: string;
-
-  @IsDate()
-  @IsNotEmpty()
-  @ApiProperty()
-  producedAt: Date;
-
-  @IsDate()
-  @IsNotEmpty()
-  @ApiProperty()
-  expiresAt: Date;
-
+export class StockDto {
   @IsInt()
   @Min(1)
   @IsNotEmpty()
   @ApiProperty()
-  categoryId: number;
+  productId: number;
 
   @IsDecimal()
-  @IsNotEmpty()
   @Min(0.0)
-  @ApiProperty()
-  cost: number;
-
-  @IsBoolean()
   @IsNotEmpty()
   @ApiProperty()
-  state: boolean;
+  price: number;
+
+  @IsInt()
+  @Min(0)
+  @IsNotEmpty()
+  @ApiProperty()
+  quantity: number;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty()
+  unit: string;
+
+  @IsDecimal()
+  @Min(0.0)
+  @IsNotEmpty()
+  @ApiProperty()
+  total: number;
+
+  @IsDate()
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty()
+  warehouseId: number;
 }

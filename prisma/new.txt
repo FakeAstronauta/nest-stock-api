@@ -1,0 +1,106 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+// one to many, several products may containt the same category 
+model Warehouse {
+    id               Int     @id @default(autoincrement())
+    name             String  @unique @db.VarChar(250)
+    stock            Stock[]
+    Seller           Users[] @relation("SellerField")
+    Admin            Users?  @relation("AdminField", fields: [warehouseAdminId], references: [id])
+    warehouseAdminId Int?
+}
+
+model Role {
+    id             Int     @id @default(autoincrement())
+    name           String  @unique @db.VarChar(250)
+    WarehouseUsers Users[]
+}
+
+model Users {
+    id              Int         @id @default(autoincrement())
+    name            String      @db.VarChar(250)
+    lastName        String      @db.VarChar(250)
+    roleId          Int
+    role            Role        @relation(fields: [roleId], references: [id])
+    bornAt          DateTime    @db.Date
+    dui             String      @unique @db.Char(9)
+    state           Boolean
+    registerAt      DateTime    @default(now()) @db.Date
+    updatedAt       DateTime    @updatedAt @db.Date
+    warehouseSeller Warehouse?  @relation("SellerField", fields: [warehouseId], references: [id])
+    warehouseId     Int?
+    warehouseAdmin  Warehouse[] @relation("AdminField")
+}
+
+// one to many, several products may containt the same category 
+model Category {
+    id      Int       @id @default(autoincrement())
+    name    String    @unique @db.VarChar(250)
+    product Product[]
+}
+
+// only provides identity of the individual product, not bulk
+// May contain updated values
+model Product {
+    id            Int             @id @default(autoincrement())
+    name          String          @unique @db.VarChar(250)
+    producedAt    DateTime?       @db.Date // must be in purchases
+    expiresAt     DateTime?       @db.Date // must be in purchases
+    categoryId    Int
+    category      Category        @relation(fields: [categoryId], references: [id])
+    cost          Decimal
+    state         Boolean
+    Stock         Stock[]
+    registerAt    DateTime        @default(now()) @db.Date
+    updatedAt     DateTime        @updatedAt @db.Date
+    PurchaseItems PurchaseItems[]
+}
+
+// only purchase details, not were was saved
+model Purchases {
+    id            Int             @id @default(autoincrement())
+    amount        Int // final price
+    purchaseCode  String
+    warehouseId   Int
+    PurchaseItems PurchaseItems[]
+    registedAt    DateTime        @default(now()) @db.Date
+    updatedAt     DateTime        @updatedAt @db.Date
+}
+
+// many-to-many table
+// this makes easy to register only for individual items details
+model PurchaseItems {
+    id          Int       @id @default(autoincrement())
+    productId   Int
+    product     Product   @relation(fields: [productId], references: [id])
+    purchasesId Int
+    purchases   Purchases @relation(fields: [purchasesId], references: [id])
+    quantity    Int
+    price       Decimal
+    unit        String
+    total       Decimal
+}
+
+// Ready to be selled
+model Stock {
+    id          Int        @id @default(autoincrement())
+    productId   Int
+    product     Product    @relation(fields: [productId], references: [id])
+    price       Float // deducted from product
+    quantity    Int
+    unit        String
+    total       Float
+    registedAt  DateTime   @default(now()) @db.Date
+    Warehouse   Warehouse? @relation(fields: [warehouseId], references: [id])
+    warehouseId Int?
+}

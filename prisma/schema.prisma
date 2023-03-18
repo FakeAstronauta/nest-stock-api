@@ -12,80 +12,102 @@ datasource db {
 
 // one to many, several products may containt the same category 
 model Warehouse {
-  id               Int              @id @default(autoincrement())
-  name             String           @unique @db.VarChar(250)
-  product          Product[]
-  purchases        Purchases[]
-  sells            Sells[]
-  warehouseSeller  WarehouseUsers[] @relation("SellerField")
-  warehouseAdmin   WarehouseUsers?  @relation("AdminField", fields: [warehouseAdminId], references: [id])
-  warehouseAdminId Int?
+  id             Int              @id @default(autoincrement())
+  name           String           @unique @db.VarChar(250)
+  stock          Stock[]
+  warehouseUsers warehouseUsers[]
 }
 
 model Role {
   id             Int              @id @default(autoincrement())
   name           String           @unique @db.VarChar(250)
-  WarehouseUsers WarehouseUsers[]
+  warehouseUsers warehouseUsers[]
 }
 
-model WarehouseUsers {
-  id              Int         @id @default(autoincrement())
-  name            String      @db.VarChar(250)
-  lastName        String      @db.VarChar(250)
-  roleId          Int
-  role            Role        @relation(fields: [roleId], references: [id])
-  bornAt          DateTime    @db.Date
-  dui             String      @unique @db.Char(9)
-  state           Boolean
-  registerAt      DateTime    @db.Date @default(now())
-  updatedAt       DateTime    @db.Date @updatedAt
-  warehouseSeller Warehouse?  @relation("SellerField", fields: [warehouseId], references: [id])
-  warehouseId     Int?
-  warehouseAdmin  Warehouse[] @relation("AdminField")
+model Users {
+  id             Int              @id @default(autoincrement())
+  name           String           @db.VarChar(250)
+  lastName       String           @db.VarChar(250)
+  bornAt         DateTime         @db.Date
+  dui            String           @unique @db.Char(9)
+  state          Boolean
+  registerAt     DateTime         @default(now()) @db.Date
+  updatedAt      DateTime         @updatedAt @db.Date
+  warehouseUsers warehouseUsers[]
 }
 
-// INSERT INTO warehouseusers ("name", "lastName", "roleId", "bornAt", "dui", "state", "registerAt", "updatedAt", "warehouseId") VALUES ('Juan', 'Perez', 1, '1970-01-01T00:00:00.000Z', '111111111', true, '2020-01-01', '2020-01-01',1);
+model warehouseUsers {
+  // id          Int         @id @default(autoincrement())
+  userId      Int         @id @unique
+  users       Users       @relation(fields: [userId], references: [id])
+  roleId      Int
+  role        Role        @relation(fields: [roleId], references: [id])
+  warehouseId Int
+  warehouse   Warehouse   @relation(fields: [warehouseId], references: [id])
+  Purchases   Purchases[]
+}
 
-// one to many, several products may containt the same category 
+// one to many, several products may containt the same category
+// contain default values
 model Category {
   id      Int       @id @default(autoincrement())
   name    String    @unique @db.VarChar(250)
   product Product[]
 }
 
+// only provides identity of the individual product, not bulk
+// May contain updated values
 model Product {
-  id          Int         @id @default(autoincrement())
-  name        String      @unique @db.VarChar(250)
-  producedAt  DateTime?   @db.Date
-  expiresAt   DateTime?   @db.Date
-  categoryId  Int
-  category    Category    @relation(fields: [categoryId], references: [id])
-  unitPrice   Decimal
-  state       Boolean
-  warehouseId Int
-  warehouse   Warehouse   @relation(fields: [warehouseId], references: [id])
-  purchases   Purchases[]
-  sells       Sells[]
+  id            Int             @id @default(autoincrement())
+  name          String          @unique @db.VarChar(250)
+  producedAt    DateTime?       @db.Date
+  expiresAt     DateTime?       @db.Date
+  categoryId    Int
+  category      Category        @relation(fields: [categoryId], references: [id])
+  cost          Decimal
+  state         Boolean
+  registerAt    DateTime        @default(now()) @db.Date
+  updatedAt     DateTime?       @updatedAt @db.Date
+  purchaseItems PurchaseItems[]
+  Stock         Stock[]
 }
 
+// only purchase details, not were was saved
 model Purchases {
-  id          Int       @id @default(autoincrement())
-  productId   Int
-  product     Product   @relation(fields: [productId], references: [id])
-  amount      Int
-  finalPrice  Decimal
-  warehouseId Int
-  warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
-  registedAt  DateTime  @db.Date @default(now())
+  id              Int             @id @default(autoincrement())
+  warehouseUserId Int
+  warehouseUser   warehouseUsers  @relation(fields: [warehouseUserId], references: [userId])
+  amount          Decimal // final price
+  purchaseCode    String
+  purchaseItems   PurchaseItems[]
+  registedAt      DateTime        @default(now()) @db.Date
+  updatedAt       DateTime        @updatedAt @db.Date
 }
 
-model Sells {
+// many-to-many table
+// this makes easy to register only for individual items details
+model PurchaseItems {
+  id         Int       @id @default(autoincrement())
+  productId  Int
+  product    Product   @relation(fields: [productId], references: [id])
+  purchaseId Int
+  purchase   Purchases @relation(fields: [purchaseId], references: [id])
+  quantity   Int
+  price      Decimal
+  unit       String
+  total      Decimal // total of every type of product
+}
+
+// Ready to be selled
+model Stock {
   id          Int       @id @default(autoincrement())
   productId   Int
   product     Product   @relation(fields: [productId], references: [id])
-  amount      Int
-  finalPrice  Decimal
+  price       Float // deducted from product
+  quantity    Int
+  unit        String
+  total       Float
+  registedAt  DateTime  @default(now()) @db.Date
+  Warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
   warehouseId Int
-  warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
-  registedAt  DateTime  @db.Date @default(now())
 }

@@ -1,1 +1,0 @@
-- why did i need to add default value to the column warehouseAdmin in the warehouse table
